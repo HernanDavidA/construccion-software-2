@@ -10,6 +10,6 @@ public final class NexusMarketApp {
     }
 
     public static void main(String[] args) {
-        System.out.println("NexusMarket domain loaded");
+        System.out.println("NexusMarket domain charged and ready");
     }
 }

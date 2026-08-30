@@ -1,6 +1,6 @@
 # NexusMarket domain classes
 
-This document explains **why each class exists** and **what it does**, aligned with the *Business Functional Specification*. The project is a Java domain model: there is no persistence, API, or graphical interface (those are out of scope).
+This document explains **why each class exists** and **what it does**, aligned with the document. The project is a Java domain model: theres no persistent, only classes required by the project
 
 When an attribute or status catalog **does not appear in the spec**, it is marked as **inferred**.
 
@@ -8,12 +8,6 @@ When an attribute or status catalog **does not appear in the spec**, it is marke
 
 ## Startup
 
-### `NexusMarketApp`
-
-- **Why:** Lets you verify that the Maven project compiles and starts (`mvn compile`, `mvn exec:java`).
-- **Role:** Entry point with no business logic. Prints that the domain is loaded.
-
----
 
 ## Users (OBJ-01, OBJ-02, OBJ-03, RG-01, RG-02, RG-03)
 
@@ -179,7 +173,7 @@ Each participant has **a single role**. Inheritance is used so the role is fixed
 
 ## Logistics and post-sale (OBJ-10, OBJ-11)
 
-The spec names shipments, returns, and refunds without attribute tables. The following is the **coherent minimum** for the flow (packing, dispatch, transport, close, and post-sale).
+The spec names shipments, returns, and refunds without attribute tables.
 
 ### `Shipment`
 
@@ -211,22 +205,3 @@ The spec names shipments, returns, and refunds without attribute tables. The fol
 ### `RefundStatus`
 
 - **Role:** **Inferred** catalog `PENDING`, `PROCESSED`, `REJECTED`.
-
----
-
-## What was not modeled (on purpose)
-
-| Objective / topic | Reason |
-| --- | --- |
-| OBJ-12 Administrative reports | Consolidated query, not a business entity. Requires a query or persistence layer. |
-| Global uniqueness of email and document | Without storage there is no central registry; classes do require that they exist. |
-| Technical authentication, UI, APIs, database | Outside the scope of the specification and of this Maven project. |
-
----
-
-## How to verify
-
-```bash
-mvn compile
-mvn exec:java
-```
