@@ -7,8 +7,8 @@
     <groupId>com.nexusmarket</groupId>
     <artifactId>nexusmarket-domain</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>NexusMarket Domain</name>
-    <description>NexusMarket domain model according to the business functional specification.</description>
+    <name>NexusMarket</name>
+    <description>NexusMarket hexagonal application: domain, use cases, ports and adapters.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,7 +27,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
-                    <mainClass>com.nexusmarket.NexusMarketApp</mainClass>
+                    <mainClass>com.nexusmarket.bootstrap.NexusMarketApp</mainClass>
                 </configuration>
             </plugin>
         </plugins>

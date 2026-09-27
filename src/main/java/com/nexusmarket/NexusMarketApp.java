@@ -1,8 +1,7 @@
 package com.nexusmarket;
 
 /**
- * Minimal entry point to verify that the domain model compiles and starts.
- * Contains no business logic.
+ * Compatibility entry point. Delegates to the hexagonal bootstrap.
  */
 public final class NexusMarketApp {
 
@@ -10,6 +9,6 @@ public final class NexusMarketApp {
     }
 
     public static void main(String[] args) {
-        System.out.println("NexusMarket domain charged and ready");
+        com.nexusmarket.bootstrap.NexusMarketApp.main(args);
     }
 }

@@ -12,6 +12,7 @@ import java.util.Objects;
  */
 public class OrderItem {
 
+    private final String productId;
     private final String productName;
     private final ProductType productType;
     private final ProductVariant variant;
@@ -23,11 +24,16 @@ public class OrderItem {
         if (quantity <= 0) {
             throw new IllegalArgumentException("quantity must be greater than zero");
         }
+        this.productId = product.getId();
         this.productName = product.getName();
         this.productType = product.getType();
         this.variant = variant;
         this.quantity = quantity;
         this.unitPrice = product.getPrice();
+    }
+
+    public String getProductId() {
+        return productId;
     }
 
     public String getProductName() {
