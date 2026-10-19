@@ -1,11 +1,15 @@
 package com.nexusmarket.infrastructure.adapter.outbound.persistence.repository;
 
+import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.infrastructure.adapter.outbound.persistence.document.UserDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserMongoRepository extends MongoRepository<UserDocument, String> {
+
+    List<UserDocument> findByRole(Role role);
 
     Optional<UserDocument> findByEmail(String email);
 

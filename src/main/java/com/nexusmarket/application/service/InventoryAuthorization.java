@@ -11,7 +11,6 @@ import com.nexusmarket.domain.model.Warehouse;
 import com.nexusmarket.domain.model.WarehouseType;
 import com.nexusmarket.domain.port.outbound.InventoryRepository;
 import com.nexusmarket.domain.port.outbound.ProductRepository;
-import com.nexusmarket.domain.port.outbound.SellerRepository;
 import com.nexusmarket.domain.port.outbound.WarehouseRepository;
 import org.springframework.stereotype.Component;
 
@@ -21,17 +20,11 @@ public class InventoryAuthorization {
     private final InventoryRepository inventory;
     private final ProductRepository products;
     private final WarehouseRepository warehouses;
-    private final SellerRepository sellers;
 
-    public InventoryAuthorization(
-            InventoryRepository inventory,
-            ProductRepository products,
-            WarehouseRepository warehouses,
-            SellerRepository sellers) {
+    public InventoryAuthorization(InventoryRepository inventory, ProductRepository products, WarehouseRepository warehouses) {
         this.inventory = inventory;
         this.products = products;
         this.warehouses = warehouses;
-        this.sellers = sellers;
     }
 
     public void requireOperation(User actor, Product product, Warehouse warehouse) {
@@ -64,7 +57,10 @@ public class InventoryAuthorization {
     }
 
     public Seller sellerOf(User actor) {
-        return sellers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Vendedor no encontrado"));
+        if (actor instanceof Seller seller) {
+            return seller;
+        }
+        throw new ResourceNotFoundException("Vendedor no encontrado");
     }
 
     private Warehouse warehouseOf(Inventory item) {

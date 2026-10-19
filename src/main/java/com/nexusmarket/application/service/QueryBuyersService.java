@@ -33,7 +33,7 @@ public class QueryBuyersService implements QueryBuyersUseCase {
     public Buyer get(User actor, String buyerId) {
         accessPolicy.requireRole(actor, Role.BUYER, Role.ADMINISTRATOR, Role.SUPERVISOR);
         Buyer buyer = buyers.findById(buyerId).orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
-        if (actor.getRole() == Role.BUYER && !buyer.getUserId().equals(actor.getId())) {
+        if (actor.getRole() == Role.BUYER && !buyer.getId().equals(actor.getId())) {
             throw new AccessDeniedException("El comprador no puede administrar información de otros compradores");
         }
         return buyer;
@@ -46,6 +46,9 @@ public class QueryBuyersService implements QueryBuyersUseCase {
     }
 
     private Buyer own(User actor) {
-        return buyers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
+        if (actor instanceof Buyer buyer) {
+            return buyer;
+        }
+        throw new ResourceNotFoundException("Comprador no encontrado");
     }
 }

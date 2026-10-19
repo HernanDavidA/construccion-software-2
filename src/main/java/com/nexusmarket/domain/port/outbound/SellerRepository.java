@@ -11,7 +11,5 @@ public interface SellerRepository {
 
     Optional<Seller> findById(String id);
 
-    Optional<Seller> findByUserId(String userId);
-
     List<Seller> findAll();
 }

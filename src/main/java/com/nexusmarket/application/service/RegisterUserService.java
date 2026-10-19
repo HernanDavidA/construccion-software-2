@@ -19,7 +19,7 @@ public class RegisterUserService {
         this.users = users;
     }
 
-    public User register(String fullName, String email, String identityDocument, Role role) {
+    public void requireAvailableIdentity(String email, String identityDocument) {
         String normalizedEmail = EmailAddress.normalize(email);
         String document = identityDocument == null ? "" : identityDocument.trim();
         if (users.existsByEmail(normalizedEmail)) {
@@ -28,6 +28,10 @@ public class RegisterUserService {
         if (document.isBlank() || users.existsByIdentityDocument(document)) {
             throw new BusinessRuleException("El documento de identidad debe ser único");
         }
-        return users.save(new User(UUID.randomUUID().toString(), fullName, normalizedEmail, document, role, UserStatus.ACTIVE));
+    }
+
+    public User register(String fullName, String email, String identityDocument, Role role) {
+        requireAvailableIdentity(email, identityDocument);
+        return users.save(new User(UUID.randomUUID().toString(), fullName, email, identityDocument, role, UserStatus.ACTIVE));
     }
 }

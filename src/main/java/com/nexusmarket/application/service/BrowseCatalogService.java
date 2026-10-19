@@ -4,10 +4,10 @@ import com.nexusmarket.domain.exception.ResourceNotFoundException;
 import com.nexusmarket.domain.model.Product;
 import com.nexusmarket.domain.model.ProductStatus;
 import com.nexusmarket.domain.model.Role;
+import com.nexusmarket.domain.model.Seller;
 import com.nexusmarket.domain.model.User;
 import com.nexusmarket.domain.port.inbound.BrowseCatalogUseCase;
 import com.nexusmarket.domain.port.outbound.ProductRepository;
-import com.nexusmarket.domain.port.outbound.SellerRepository;
 import com.nexusmarket.domain.service.AccessPolicy;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +18,10 @@ public class BrowseCatalogService implements BrowseCatalogUseCase {
 
     private final AccessPolicy accessPolicy;
     private final ProductRepository products;
-    private final SellerRepository sellers;
 
-    public BrowseCatalogService(AccessPolicy accessPolicy, ProductRepository products, SellerRepository sellers) {
+    public BrowseCatalogService(AccessPolicy accessPolicy, ProductRepository products) {
         this.accessPolicy = accessPolicy;
         this.products = products;
-        this.sellers = sellers;
     }
 
     @Override
@@ -39,9 +37,9 @@ public class BrowseCatalogService implements BrowseCatalogUseCase {
     @Override
     public List<Product> listOwn(User actor) {
         accessPolicy.requireRole(actor, Role.SELLER);
-        String sellerId = sellers.findByUserId(actor.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vendedor no encontrado"))
-                .getId();
-        return products.findBySellerId(sellerId);
+        if (!(actor instanceof Seller seller)) {
+            throw new ResourceNotFoundException("Vendedor no encontrado");
+        }
+        return products.findBySellerId(seller.getId());
     }
 }

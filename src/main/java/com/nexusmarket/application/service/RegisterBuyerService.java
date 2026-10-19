@@ -3,8 +3,7 @@ package com.nexusmarket.application.service;
 import com.nexusmarket.domain.command.RegisterBuyer;
 import com.nexusmarket.domain.model.Buyer;
 import com.nexusmarket.domain.model.BuyerCommercialStatus;
-import com.nexusmarket.domain.model.Role;
-import com.nexusmarket.domain.model.User;
+import com.nexusmarket.domain.model.UserStatus;
 import com.nexusmarket.domain.port.inbound.RegisterBuyerUseCase;
 import com.nexusmarket.domain.port.outbound.BuyerRepository;
 import org.springframework.stereotype.Service;
@@ -24,10 +23,13 @@ public class RegisterBuyerService implements RegisterBuyerUseCase {
 
     @Override
     public Buyer register(RegisterBuyer command) {
-        User user = registerUserService.register(command.fullName(), command.email(), command.identityDocument(), Role.BUYER);
+        registerUserService.requireAvailableIdentity(command.email(), command.identityDocument());
         Buyer buyer = new Buyer(
                 UUID.randomUUID().toString(),
-                user.getId(),
+                command.fullName(),
+                command.email(),
+                command.identityDocument(),
+                UserStatus.ACTIVE,
                 command.primaryAddress(),
                 command.additionalAddresses(),
                 BuyerCommercialStatus.ENABLED);

@@ -8,10 +8,8 @@ import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.domain.model.Seller;
 import com.nexusmarket.domain.model.User;
 import com.nexusmarket.domain.port.inbound.QueryOrdersUseCase;
-import com.nexusmarket.domain.port.outbound.BuyerRepository;
 import com.nexusmarket.domain.port.outbound.OrderRepository;
 import com.nexusmarket.domain.port.outbound.ProductRepository;
-import com.nexusmarket.domain.port.outbound.SellerRepository;
 import com.nexusmarket.domain.service.AccessPolicy;
 import org.springframework.stereotype.Service;
 
@@ -22,20 +20,11 @@ public class QueryOrdersService implements QueryOrdersUseCase {
 
     private final AccessPolicy accessPolicy;
     private final OrderRepository orders;
-    private final BuyerRepository buyers;
-    private final SellerRepository sellers;
     private final ProductRepository products;
 
-    public QueryOrdersService(
-            AccessPolicy accessPolicy,
-            OrderRepository orders,
-            BuyerRepository buyers,
-            SellerRepository sellers,
-            ProductRepository products) {
+    public QueryOrdersService(AccessPolicy accessPolicy, OrderRepository orders, ProductRepository products) {
         this.accessPolicy = accessPolicy;
         this.orders = orders;
-        this.buyers = buyers;
-        this.sellers = sellers;
         this.products = products;
     }
 
@@ -76,10 +65,16 @@ public class QueryOrdersService implements QueryOrdersUseCase {
     }
 
     private Buyer buyerOf(User actor) {
-        return buyers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
+        if (actor instanceof Buyer buyer) {
+            return buyer;
+        }
+        throw new ResourceNotFoundException("Comprador no encontrado");
     }
 
     private Seller sellerOf(User actor) {
-        return sellers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Vendedor no encontrado"));
+        if (actor instanceof Seller seller) {
+            return seller;
+        }
+        throw new ResourceNotFoundException("Vendedor no encontrado");
     }
 }

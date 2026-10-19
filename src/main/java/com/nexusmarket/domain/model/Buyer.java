@@ -5,22 +5,22 @@ import com.nexusmarket.domain.exception.BusinessRuleException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Buyer {
+public class Buyer extends User {
 
-    private final String id;
-    private final String userId;
     private Address primaryAddress;
     private final List<Address> additionalAddresses = new ArrayList<>();
     private BuyerCommercialStatus commercialStatus;
 
     public Buyer(
             String id,
-            String userId,
+            String fullName,
+            String email,
+            String identityDocument,
+            UserStatus status,
             Address primaryAddress,
             List<Address> additionalAddresses,
             BuyerCommercialStatus commercialStatus) {
-        this.id = RequiredText.require(id, "El identificador del comprador es obligatorio");
-        this.userId = RequiredText.require(userId, "El comprador debe estar asociado a un usuario");
+        super(id, fullName, email, identityDocument, status, Role.BUYER);
         replaceAddresses(primaryAddress, additionalAddresses);
         if (commercialStatus == null) {
             throw new BusinessRuleException("El estado comercial del comprador es obligatorio");
@@ -49,14 +49,6 @@ public class Buyer {
         if (additional != null) {
             this.additionalAddresses.addAll(additional);
         }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getUserId() {
-        return userId;
     }
 
     public Address getPrimaryAddress() {

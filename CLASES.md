@@ -90,9 +90,9 @@ Cada enum existe para que un estado o tipo no sea un texto libre.
 | `VariantIds` | Dos variantes son la misma solo si su id coincide | Normaliza y compara identificadores de variante |
 | `Address` | Comprador, bodega y envío comparten domicilio | Guarda calle, ciudad y referencia |
 | `ProductVariant` | Un producto se vende por talla, color u otra variante | Identidad de la variante dentro del producto |
-| `User` | RG-02 pide un solo rol y la identidad es distinta del perfil comercial | Crea la persona, normaliza el correo y solo permite cambiar el estado |
-| `Buyer` | El comprador tiene direcciones y un estado comercial aparte del usuario | Perfil de compra; la dirección principal es obligatoria si hay producto físico |
-| `Seller` | El vendedor no es un usuario con un flag: tiene razón social y documento | Perfil comercial creado solo por un administrador |
+| `User` | RG-02 pide un solo rol. Operador, administrador y supervisor son este tipo | Normaliza el correo, guarda un único rol y solo permite cambiar el estado. Rechaza los roles de comprador y vendedor |
+| `Buyer` | El comprador es un usuario con datos de entrega | Extiende `User` con rol `BUYER`, dirección principal y estado comercial |
+| `Seller` | El vendedor es un usuario con razón social, no un perfil aparte | Extiende `User` con rol `SELLER` y nombre comercial |
 | `Warehouse` | El inventario vive en bodegas del marketplace o del vendedor | `SELLER` exige `sellerId`; `MARKETPLACE` lo prohíbe |
 | `Product` | El catálogo distingue físico y digital, y nace suspendido | Valida que la variante exista y que el producto pertenezca al vendedor |
 | `Inventory` | El stock no puede ser negativo ni reservarse si está dañado | `receive`, `reserve`, `saleOutbound`, `adjust`, `returnStock`, `markCondition` |
@@ -104,7 +104,7 @@ Cada enum existe para que un estado o tipo no sea un texto libre.
 | `Shipment` | El producto físico necesita una cadena logística propia | `prepare` → `pack` → `dispatch` → `markInTransit` → `deliver` |
 | `ReturnRequest` | Solo un pedido finalizado puede devolverse, y una sola vez en curso | `approve` y `reject` |
 | `Refund` | El dinero se devuelve después de aprobar, no al solicitar | `process` marca el reembolso y habilita anular la factura |
-| `SellerOnboarding` | Dar de alta un vendedor crea usuario, perfil y primera bodega juntos | Agrupa el resultado de `RegisterSellerService` |
+| `SellerOnboarding` | Dar de alta un vendedor crea al vendedor y su primera bodega juntos | Agrupa el resultado de `RegisterSellerService` |
 | `AdminReport` | El administrador y el supervisor consultan operación, no mutan pedidos | Pedidos por estado, stock por bodega y ventas facturadas |
 
 ## Política y comandos
@@ -147,7 +147,7 @@ El detalle de comportamiento, roles y rutas está en [SERVICIOS.md](SERVICIOS.md
 
 ## Persistencia
 
-Cada agregado del dominio tiene un documento Mongo (`UserDocument`, `BuyerDocument`, `SellerDocument`, `WarehouseDocument`, `ProductDocument`, `InventoryDocument`, `InventoryMovementDocument`, `CartDocument`, `OrderDocument`, `InvoiceDocument`, `ShipmentDocument`, `ReturnRequestDocument`, `RefundDocument`), un `MongoRepository` de Spring Data y un adaptador que implementa el puerto de salida. Los embebidos `AddressDocument`, `VariantDocument`, `CartItemDocument` y `OrderLineDocument` evitan colecciones para datos que no se consultan solos. Los índices únicos de correo y documento de identidad viven en el adaptador de usuarios, no en el dominio.
+Cada agregado del dominio tiene un documento Mongo, salvo el comprador y el vendedor: son subclases de `User` y se guardan en la colección `users`, con la dirección o el nombre comercial según el rol. El resto usa su documento (`WarehouseDocument`, `ProductDocument`, `InventoryDocument`, `InventoryMovementDocument`, `CartDocument`, `OrderDocument`, `InvoiceDocument`, `ShipmentDocument`, `ReturnRequestDocument`, `RefundDocument`), un `MongoRepository` de Spring Data y un adaptador que implementa el puerto de salida. `BuyerRepository` y `SellerRepository` leen esa misma colección y filtran por rol. Los embebidos `AddressDocument`, `VariantDocument`, `CartItemDocument` y `OrderLineDocument` evitan colecciones para datos que no se consultan solos. Los índices únicos de correo y documento de identidad viven en el adaptador de usuarios, no en el dominio.
 
 ## Configuración
 

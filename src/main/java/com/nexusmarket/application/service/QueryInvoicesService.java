@@ -2,17 +2,16 @@ package com.nexusmarket.application.service;
 
 import com.nexusmarket.domain.exception.AccessDeniedException;
 import com.nexusmarket.domain.exception.ResourceNotFoundException;
+import com.nexusmarket.domain.model.Buyer;
 import com.nexusmarket.domain.model.Invoice;
 import com.nexusmarket.domain.model.Order;
 import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.domain.model.Seller;
 import com.nexusmarket.domain.model.User;
 import com.nexusmarket.domain.port.inbound.QueryInvoicesUseCase;
-import com.nexusmarket.domain.port.outbound.BuyerRepository;
 import com.nexusmarket.domain.port.outbound.InvoiceRepository;
 import com.nexusmarket.domain.port.outbound.OrderRepository;
 import com.nexusmarket.domain.port.outbound.ProductRepository;
-import com.nexusmarket.domain.port.outbound.SellerRepository;
 import com.nexusmarket.domain.service.AccessPolicy;
 import org.springframework.stereotype.Service;
 
@@ -24,22 +23,16 @@ public class QueryInvoicesService implements QueryInvoicesUseCase {
     private final AccessPolicy accessPolicy;
     private final InvoiceRepository invoices;
     private final OrderRepository orders;
-    private final BuyerRepository buyers;
-    private final SellerRepository sellers;
     private final ProductRepository products;
 
     public QueryInvoicesService(
             AccessPolicy accessPolicy,
             InvoiceRepository invoices,
             OrderRepository orders,
-            BuyerRepository buyers,
-            SellerRepository sellers,
             ProductRepository products) {
         this.accessPolicy = accessPolicy;
         this.invoices = invoices;
         this.orders = orders;
-        this.buyers = buyers;
-        this.sellers = sellers;
         this.products = products;
     }
 
@@ -63,11 +56,10 @@ public class QueryInvoicesService implements QueryInvoicesUseCase {
         if (actor.getRole() == Role.ADMINISTRATOR || actor.getRole() == Role.SUPERVISOR) {
             return true;
         }
-        if (actor.getRole() == Role.BUYER) {
-            return buyers.findByUserId(actor.getId()).map(buyer -> buyer.getId().equals(invoice.getBuyerId())).orElse(false);
+        if (actor instanceof Buyer) {
+            return actor.getId().equals(invoice.getBuyerId());
         }
-        Seller seller = sellers.findByUserId(actor.getId()).orElse(null);
-        if (seller == null) {
+        if (!(actor instanceof Seller seller)) {
             return false;
         }
         Order order = orders.findById(invoice.getOrderId()).orElse(null);

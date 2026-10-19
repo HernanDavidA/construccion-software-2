@@ -1,9 +1,10 @@
 package com.nexusmarket.infrastructure.adapter.outbound.persistence;
 
 import com.nexusmarket.domain.model.Buyer;
+import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.domain.port.outbound.BuyerRepository;
-import com.nexusmarket.infrastructure.adapter.outbound.persistence.document.BuyerDocument;
-import com.nexusmarket.infrastructure.adapter.outbound.persistence.repository.BuyerMongoRepository;
+import com.nexusmarket.infrastructure.adapter.outbound.persistence.document.UserDocument;
+import com.nexusmarket.infrastructure.adapter.outbound.persistence.repository.UserMongoRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,29 +13,24 @@ import java.util.Optional;
 @Component
 public class BuyerRepositoryAdapter implements BuyerRepository {
 
-    private final BuyerMongoRepository mongo;
+    private final UserMongoRepository mongo;
 
-    public BuyerRepositoryAdapter(BuyerMongoRepository mongo) {
+    public BuyerRepositoryAdapter(UserMongoRepository mongo) {
         this.mongo = mongo;
     }
 
     @Override
     public Buyer save(Buyer buyer) {
-        return mongo.save(BuyerDocument.from(buyer)).toDomain();
+        return (Buyer) mongo.save(UserDocument.from(buyer)).toDomain();
     }
 
     @Override
     public Optional<Buyer> findById(String id) {
-        return mongo.findById(id).map(BuyerDocument::toDomain);
-    }
-
-    @Override
-    public Optional<Buyer> findByUserId(String userId) {
-        return mongo.findByUserId(userId).map(BuyerDocument::toDomain);
+        return mongo.findById(id).map(UserDocument::toDomain).filter(Buyer.class::isInstance).map(Buyer.class::cast);
     }
 
     @Override
     public List<Buyer> findAll() {
-        return mongo.findAll().stream().map(BuyerDocument::toDomain).toList();
+        return mongo.findByRole(Role.BUYER).stream().map(document -> (Buyer) document.toDomain()).toList();
     }
 }

@@ -1,6 +1,6 @@
 # Servicios de NexusMarket
 
-Hay 33 servicios de aplicación en `com.nexusmarket.application.service`. Cada uno implementa un puerto de entrada, salvo `RegisterUserService`, que comparten los altas de identidad. `InventoryAuthorization` no es un caso de uso: solo decide si un actor puede tocar un producto en una bodega.
+Hay 33 servicios de aplicación en `com.nexusmarket.application.service`. Cada uno implementa un puerto de entrada, salvo `RegisterUserService`, que crea el personal y comprueba que el correo y el documento estén libres. `InventoryAuthorization` no es un caso de uso: solo decide si un actor puede tocar un producto en una bodega.
 
 El actor llega en el encabezado `X-User-Id`. Los mensajes de error salen en español.
 
@@ -12,13 +12,12 @@ Estos ocho servicios cubren el ciclo de una compra: alta del vendedor, existenci
 
 Solo el administrador puede ejecutarlo (`POST /api/sellers`). Un vendedor no se auto-registra.
 
-En una sola operación crea tres cosas, porque un vendedor sin bodega no puede recibir mercancía:
+En una sola operación crea dos cosas, porque un vendedor sin bodega no puede recibir mercancía:
 
-1. Un `User` con rol `SELLER`, reutilizando `RegisterUserService` para rechazar correo o documento repetidos.
-2. Un `Seller` con razón social y el mismo documento.
-3. Una `Warehouse` de tipo `SELLER` ligada a ese vendedor.
+1. Un `Seller`, que ya es el usuario con rol `SELLER`. `RegisterUserService` solo comprueba que el correo y el documento estén libres; no guarda un usuario genérico.
+2. Una `Warehouse` de tipo `SELLER` ligada a ese vendedor.
 
-Devuelve `SellerOnboarding` con el perfil y la bodega.
+La bodega se construye antes de guardar. Si su dirección es inválida, no se ocupa el correo. Devuelve `SellerOnboarding` con el vendedor y la bodega.
 
 ### ReceiveStockService
 
@@ -32,7 +31,7 @@ Rechaza productos digitales: no tienen inventario. Exige que la variante exista.
 
 Lo ejecuta un comprador habilitado (`POST /api/orders/confirm`).
 
-Recorre el carrito. Cada producto debe estar `PUBLISHED` y la variante debe existir. Si la línea es física, busca inventario `AVAILABLE` que cubra la cantidad, reserva esas unidades con un movimiento `RESERVATION` y anota la bodega en la línea. Si alguna línea es física y el comprador no tiene dirección principal, la operación falla y no se guarda el pedido. El pedido nace en `PENDING_PAYMENT`, se vacía el carrito y el precio de cada línea queda congelado.
+Recorre el carrito. Cada producto debe estar `PUBLISHED` y la variante debe existir. Si la línea es física, busca inventario `AVAILABLE` que cubra la cantidad, reserva esas unidades con un movimiento `RESERVATION` y anota la bodega en la línea. El pedido nace en `PENDING_PAYMENT`, se vacía el carrito y el precio de cada línea queda congelado. La dirección principal ya es obligatoria al crear el comprador.
 
 ### RegisterPaymentService
 
@@ -70,31 +69,31 @@ Solo procede si la devolución está `APPROVED` y ya existe el reembolso pendien
 
 | Servicio | Rol | Ruta | Qué resuelve |
 | --- | --- | --- | --- |
-| `RegisterUserService` | lo usan otros altas | — | Unicidad de correo y documento antes de guardar un `User` |
+| `RegisterUserService` | lo usa el alta de personal | — | Unicidad de correo y documento, y persistencia del personal |
 | `RegisterStaffService` | administrador | `POST /api/users/staff` | Operador logístico, administrador o supervisor. No crea vendedores |
 | `ChangeUserStatusService` | administrador | `PATCH /api/users/{id}/status` | Activa o bloquea. Un bloqueado no pasa `AccessPolicy` |
-| `QueryUsersService` | administrador, supervisor | `GET /api/users`, `GET /api/users/{id}` | Consulta de identidades |
-| `RegisterBuyerService` | público | `POST /api/buyers` | Usuario `BUYER` más perfil habilitado |
+| `QueryUsersService` | cualquiera sobre sí mismo; listado: administrador, supervisor | `GET /api/users`, `GET /api/users/{id}` | Consulta de identidades |
+| `RegisterBuyerService` | público | `POST /api/buyers` | Un `Buyer` habilitado, guardado de una vez |
 | `UpdateBuyerAddressesService` | comprador | `PUT /api/buyers/addresses` | Dirección principal y alternativas del propio perfil |
 | `ChangeBuyerCommercialStatusService` | administrador | `PATCH /api/buyers/{id}/commercial-status` | Habilita o suspende compras sin borrar al usuario |
 | `QueryBuyersService` | comprador (el propio), administrador, supervisor | `GET /api/buyers/me`, `GET /api/buyers/{id}`, `GET /api/buyers` | Un comprador no lista a los demás |
-| `QuerySellersService` | administrador, supervisor | `GET /api/sellers`, `GET /api/sellers/{id}` | Consulta de vendedores |
-| `RegisterWarehouseService` | administrador, operador logístico | `POST /api/warehouses` | Bodega `MARKETPLACE` o `SELLER` con las reglas de `sellerId` |
+| `QuerySellersService` | vendedor (el propio), administrador, supervisor | `GET /api/sellers`, `GET /api/sellers/{id}` | El listado completo es solo de administrador y supervisor |
+| `RegisterWarehouseService` | administrador | `POST /api/warehouses` | Bodega `MARKETPLACE` o `SELLER` con las reglas de `sellerId` |
 | `QueryWarehousesService` | administrador, operador, supervisor, vendedor | `GET /api/warehouses` | El vendedor ve las suyas y las del marketplace |
 | `RegisterProductService` | vendedor | `POST /api/products` | Alta en `SUSPENDED` y asignación de ids de variante |
-| `ChangeProductStatusService` | vendedor dueño, administrador | `PATCH /api/products/{id}/status` | Publicar, suspender o descontinuar |
+| `ChangeProductStatusService` | vendedor dueño | `PATCH /api/products/{id}/status` | Publicar, suspender o descontinuar |
 | `BrowseCatalogService` | público en el catálogo; vendedor en los suyos | `GET /api/catalog`, `GET /api/products/{id}`, `GET /api/products/mine` | El catálogo público solo muestra `PUBLISHED` |
 | `AdjustStockService` | vendedor, operador logístico | `POST /api/inventory/adjustments` | Corrección de saldo con movimiento `ADJUSTMENT` |
 | `MarkInventoryConditionService` | vendedor, operador logístico | `POST /api/inventory/{id}/condition` | `AVAILABLE` o `DAMAGED` |
 | `QueryInventoryService` | vendedor, operador, administrador, supervisor | `GET /api/inventory`, `GET /api/inventory/{id}/movements` | El comprador no consulta existencias |
 | `ManageCartService` | comprador | `GET/POST/DELETE /api/cart` | Arma el carrito sin reservar stock |
-| `QueryOrdersService` | comprador (los propios), administrador, supervisor | `GET /api/orders`, `GET /api/orders/{id}` | Un comprador no ve pedidos ajenos |
-| `QueryInvoicesService` | comprador (las propias), administrador, supervisor | `GET /api/invoices`, `GET /api/invoices/order/{orderId}` | La factura no se emite aquí; solo se consulta |
+| `QueryOrdersService` | comprador (los propios), vendedor (con sus productos), operador logístico, administrador, supervisor | `GET /api/orders`, `GET /api/orders/{id}` | Un comprador no ve pedidos ajenos |
+| `QueryInvoicesService` | comprador (las propias), vendedor (pedidos con sus productos), administrador, supervisor | `GET /api/invoices`, `GET /api/invoices/order/{orderId}` | La factura no se emite aquí; solo se consulta |
 | `PackShipmentService` | operador logístico | `POST /api/shipments/{id}/pack` | `PREPARING` → `PACKED` |
 | `MarkShipmentInTransitService` | operador logístico | `POST /api/shipments/{id}/transit` | `SHIPPED` → `IN_TRANSIT` |
-| `QueryShipmentService` | operador, comprador dueño, administrador | `GET /api/shipments/order/{orderId}` | Seguimiento del envío de un pedido |
+| `QueryShipmentService` | operador, comprador dueño, administrador, supervisor | `GET /api/shipments/order/{orderId}` | Seguimiento del envío de un pedido |
 | `RequestReturnService` | comprador dueño | `POST /api/returns` | Solo pedido `COMPLETED` y una devolución activa |
-| `QueryReturnsService` | comprador (las propias), administrador | `GET /api/returns/order/{orderId}` | Historial de la posventa |
+| `QueryReturnsService` | comprador (las propias), administrador, supervisor | `GET /api/returns/order/{orderId}` | Historial de la posventa |
 | `QueryAdminReportService` | administrador, supervisor | `GET /api/reports` | Pedidos por estado, stock por bodega y ventas facturadas |
 
 ## Cómo se encadenan

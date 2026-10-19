@@ -24,8 +24,9 @@ public class UpdateBuyerAddressesService implements UpdateBuyerAddressesUseCase 
     @Override
     public Buyer update(User actor, UpdateAddresses command) {
         accessPolicy.requireRole(actor, Role.BUYER);
-        Buyer buyer = buyers.findByUserId(actor.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
+        if (!(actor instanceof Buyer buyer)) {
+            throw new ResourceNotFoundException("Comprador no encontrado");
+        }
         buyer.updateAddresses(command.primaryAddress(), command.additionalAddresses());
         return buyers.save(buyer);
     }

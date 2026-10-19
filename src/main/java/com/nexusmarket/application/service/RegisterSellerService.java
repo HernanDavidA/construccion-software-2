@@ -5,6 +5,7 @@ import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.domain.model.Seller;
 import com.nexusmarket.domain.model.SellerOnboarding;
 import com.nexusmarket.domain.model.User;
+import com.nexusmarket.domain.model.UserStatus;
 import com.nexusmarket.domain.model.Warehouse;
 import com.nexusmarket.domain.model.WarehouseType;
 import com.nexusmarket.domain.port.inbound.RegisterSellerUseCase;
@@ -37,18 +38,22 @@ public class RegisterSellerService implements RegisterSellerUseCase {
     @Override
     public SellerOnboarding register(User actor, RegisterSeller command) {
         accessPolicy.requireRole(actor, Role.ADMINISTRATOR);
-        User user = registerUserService.register(command.fullName(), command.email(), command.identityDocument(), Role.SELLER);
-        Seller seller = sellers.save(new Seller(
+        registerUserService.requireAvailableIdentity(command.email(), command.identityDocument());
+        Seller seller = new Seller(
                 UUID.randomUUID().toString(),
-                user.getId(),
-                command.tradeName(),
-                user.getIdentityDocument()));
-        Warehouse warehouse = warehouses.save(new Warehouse(
+                command.fullName(),
+                command.email(),
+                command.identityDocument(),
+                UserStatus.ACTIVE,
+                command.tradeName());
+        Warehouse warehouse = new Warehouse(
                 UUID.randomUUID().toString(),
                 command.warehouseName(),
                 WarehouseType.SELLER,
                 seller.getId(),
-                command.warehouseAddress()));
+                command.warehouseAddress());
+        sellers.save(seller);
+        warehouses.save(warehouse);
         return new SellerOnboarding(seller, warehouse);
     }
 }

@@ -12,7 +12,6 @@ import com.nexusmarket.domain.model.ProductStatus;
 import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.domain.model.User;
 import com.nexusmarket.domain.port.inbound.ManageCartUseCase;
-import com.nexusmarket.domain.port.outbound.BuyerRepository;
 import com.nexusmarket.domain.port.outbound.CartRepository;
 import com.nexusmarket.domain.port.outbound.ProductRepository;
 import com.nexusmarket.domain.service.AccessPolicy;
@@ -26,13 +25,11 @@ public class ManageCartService implements ManageCartUseCase {
 
     private final AccessPolicy accessPolicy;
     private final CartRepository carts;
-    private final BuyerRepository buyers;
     private final ProductRepository products;
 
-    public ManageCartService(AccessPolicy accessPolicy, CartRepository carts, BuyerRepository buyers, ProductRepository products) {
+    public ManageCartService(AccessPolicy accessPolicy, CartRepository carts, ProductRepository products) {
         this.accessPolicy = accessPolicy;
         this.carts = carts;
-        this.buyers = buyers;
         this.products = products;
     }
 
@@ -80,6 +77,9 @@ public class ManageCartService implements ManageCartUseCase {
     }
 
     private Buyer buyerOf(User actor) {
-        return buyers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
+        if (actor instanceof Buyer buyer) {
+            return buyer;
+        }
+        throw new ResourceNotFoundException("Comprador no encontrado");
     }
 }

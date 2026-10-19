@@ -10,7 +10,6 @@ import com.nexusmarket.domain.model.Role;
 import com.nexusmarket.domain.model.Shipment;
 import com.nexusmarket.domain.model.User;
 import com.nexusmarket.domain.port.inbound.ConfirmDeliveryUseCase;
-import com.nexusmarket.domain.port.outbound.BuyerRepository;
 import com.nexusmarket.domain.port.outbound.OrderRepository;
 import com.nexusmarket.domain.port.outbound.ShipmentRepository;
 import com.nexusmarket.domain.service.AccessPolicy;
@@ -22,17 +21,11 @@ public class ConfirmDeliveryService implements ConfirmDeliveryUseCase {
     private final AccessPolicy accessPolicy;
     private final OrderRepository orders;
     private final ShipmentRepository shipments;
-    private final BuyerRepository buyers;
 
-    public ConfirmDeliveryService(
-            AccessPolicy accessPolicy,
-            OrderRepository orders,
-            ShipmentRepository shipments,
-            BuyerRepository buyers) {
+    public ConfirmDeliveryService(AccessPolicy accessPolicy, OrderRepository orders, ShipmentRepository shipments) {
         this.accessPolicy = accessPolicy;
         this.orders = orders;
         this.shipments = shipments;
-        this.buyers = buyers;
     }
 
     @Override
@@ -40,8 +33,7 @@ public class ConfirmDeliveryService implements ConfirmDeliveryUseCase {
         accessPolicy.requireRole(actor, Role.BUYER, Role.LOGISTICS_OPERATOR);
         Order order = orders.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
         if (actor.getRole() == Role.BUYER) {
-            Buyer buyer = buyers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
-            if (!buyer.getId().equals(order.getBuyerId())) {
+            if (!(actor instanceof Buyer) || !actor.getId().equals(order.getBuyerId())) {
                 throw new AccessDeniedException("El comprador no puede administrar pedidos de otros compradores");
             }
         }

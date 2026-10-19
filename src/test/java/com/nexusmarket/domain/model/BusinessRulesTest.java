@@ -62,10 +62,19 @@ class BusinessRulesTest {
 
     @Test
     void userKeepsSingleRoleAndNormalizedEmail() {
-        User user = new User("user-1", "Ana Perez", "Ana@NexusMarket.local", "123", Role.BUYER, UserStatus.ACTIVE);
+        Buyer buyer = new Buyer(
+                "user-1",
+                "Ana Perez",
+                "Ana@NexusMarket.local",
+                "123",
+                UserStatus.ACTIVE,
+                new Address("Calle 1", "Medellin", null, null),
+                List.of(),
+                BuyerCommercialStatus.ENABLED);
 
-        assertEquals(Role.BUYER, user.getRole());
-        assertEquals("ana@nexusmarket.local", user.getEmail());
-        assertThrows(BusinessRuleException.class, () -> new User("user-2", "Ana", "ana", "123", null, UserStatus.ACTIVE));
+        assertEquals(Role.BUYER, buyer.getRole());
+        assertEquals("ana@nexusmarket.local", buyer.getEmail());
+        assertThrows(BusinessRuleException.class, () -> new User("user-2", "Ana", "ana@nexusmarket.local", "456", Role.BUYER, UserStatus.ACTIVE));
+        assertThrows(BusinessRuleException.class, () -> new User("user-3", "Ana", "ana", "789", null, UserStatus.ACTIVE));
     }
 }

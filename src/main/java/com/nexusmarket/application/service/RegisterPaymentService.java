@@ -78,8 +78,7 @@ public class RegisterPaymentService implements RegisterPaymentUseCase {
     }
 
     private void requireOwner(User actor, Order order) {
-        Buyer buyer = buyers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Comprador no encontrado"));
-        if (!buyer.getId().equals(order.getBuyerId())) {
+        if (!(actor instanceof Buyer buyer) || !buyer.getId().equals(order.getBuyerId())) {
             throw new AccessDeniedException("El comprador no puede administrar pedidos de otros compradores");
         }
     }

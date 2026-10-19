@@ -27,11 +27,8 @@ public class QuerySellersService implements QuerySellersUseCase {
     public Seller get(User actor, String sellerId) {
         accessPolicy.requireRole(actor, Role.ADMINISTRATOR, Role.SUPERVISOR, Role.SELLER);
         Seller seller = sellers.findById(sellerId).orElseThrow(() -> new ResourceNotFoundException("Vendedor no encontrado"));
-        if (actor.getRole() == Role.SELLER) {
-            Seller own = sellers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Vendedor no encontrado"));
-            if (!own.getId().equals(seller.getId())) {
-                throw new AccessDeniedException("RG-03: el vendedor no puede administrar información de otros vendedores");
-            }
+        if (actor.getRole() == Role.SELLER && !actor.getId().equals(seller.getId())) {
+            throw new AccessDeniedException("RG-03: el vendedor no puede administrar información de otros vendedores");
         }
         return seller;
     }

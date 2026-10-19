@@ -11,7 +11,5 @@ public interface BuyerRepository {
 
     Optional<Buyer> findById(String id);
 
-    Optional<Buyer> findByUserId(String userId);
-
     List<Buyer> findAll();
 }

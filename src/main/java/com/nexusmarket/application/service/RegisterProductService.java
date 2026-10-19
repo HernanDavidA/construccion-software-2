@@ -10,7 +10,6 @@ import com.nexusmarket.domain.model.Seller;
 import com.nexusmarket.domain.model.User;
 import com.nexusmarket.domain.port.inbound.RegisterProductUseCase;
 import com.nexusmarket.domain.port.outbound.ProductRepository;
-import com.nexusmarket.domain.port.outbound.SellerRepository;
 import com.nexusmarket.domain.service.AccessPolicy;
 import org.springframework.stereotype.Service;
 
@@ -23,12 +22,10 @@ public class RegisterProductService implements RegisterProductUseCase {
 
     private final AccessPolicy accessPolicy;
     private final ProductRepository products;
-    private final SellerRepository sellers;
 
-    public RegisterProductService(AccessPolicy accessPolicy, ProductRepository products, SellerRepository sellers) {
+    public RegisterProductService(AccessPolicy accessPolicy, ProductRepository products) {
         this.accessPolicy = accessPolicy;
         this.products = products;
-        this.sellers = sellers;
     }
 
     @Override
@@ -60,6 +57,9 @@ public class RegisterProductService implements RegisterProductUseCase {
     }
 
     private Seller sellerOf(User actor) {
-        return sellers.findByUserId(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Vendedor no encontrado"));
+        if (actor instanceof Seller seller) {
+            return seller;
+        }
+        throw new ResourceNotFoundException("Vendedor no encontrado");
     }
 }
