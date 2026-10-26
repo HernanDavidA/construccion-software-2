@@ -41,14 +41,17 @@ public class ReceiveStockService implements ReceiveStockUseCase {
     @Override
     public Inventory receive(User actor, ReceiveStock command) {
         accessPolicy.requireRole(actor, Role.SELLER, Role.LOGISTICS_OPERATOR);
-        Product product = products.findById(command.productId()).orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+        Product product = products.findById(command.productId())
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
         if (product.getType() != ProductType.PHYSICAL) {
             throw new BusinessRuleException("Los productos digitales no requieren inventario");
         }
         product.requireVariant(command.variantId());
-        Warehouse warehouse = warehouses.findById(command.warehouseId()).orElseThrow(() -> new ResourceNotFoundException("Bodega no encontrada"));
+        Warehouse warehouse = warehouses.findById(command.warehouseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Bodega no encontrada"));
         authorization.requireOperation(actor, product, warehouse);
-        Inventory item = inventory.findByProductVariantAndWarehouse(product.getId(), command.variantId(), warehouse.getId())
+        Inventory item = inventory
+                .findByProductVariantAndWarehouse(product.getId(), command.variantId(), warehouse.getId())
                 .orElseGet(() -> Inventory.create(product.getId(), command.variantId(), warehouse.getId()));
         var movement = item.receive(command.quantity(), "INGRESO");
         inventory.save(item);

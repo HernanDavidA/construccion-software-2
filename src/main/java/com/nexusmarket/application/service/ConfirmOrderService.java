@@ -60,7 +60,8 @@ public class ConfirmOrderService implements ConfirmOrderUseCase {
         if (buyer.getCommercialStatus() != BuyerCommercialStatus.ENABLED) {
             throw new BusinessRuleException("El comprador no está habilitado para comprar");
         }
-        Cart cart = carts.findByBuyerId(buyer.getId()).orElseThrow(() -> new BusinessRuleException("El carrito no tiene productos"));
+        Cart cart = carts.findByBuyerId(buyer.getId())
+                .orElseThrow(() -> new BusinessRuleException("El carrito no tiene productos"));
         if (cart.getItems().isEmpty()) {
             throw new BusinessRuleException("El carrito no tiene productos");
         }
@@ -71,7 +72,8 @@ public class ConfirmOrderService implements ConfirmOrderUseCase {
         List<InventoryMovement> movements = new ArrayList<>();
 
         for (CartItem item : cart.getItems()) {
-            Product product = products.findById(item.productId()).orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+            Product product = products.findById(item.productId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
             if (product.getStatus() != ProductStatus.PUBLISHED) {
                 throw new BusinessRuleException("Solo se pueden comprar productos publicados");
             }
@@ -79,19 +81,22 @@ public class ConfirmOrderService implements ConfirmOrderUseCase {
             String warehouseId = null;
             if (product.getType() == ProductType.PHYSICAL) {
                 Inventory stock = inventory.findWithAvailability(product.getId(), item.variantId(), item.quantity())
-                        .orElseThrow(() -> new BusinessRuleException("No hay existencias suficientes para " + product.getName()));
+                        .orElseThrow(() -> new BusinessRuleException(
+                                "No hay existencias suficientes para " + product.getName()));
                 movements.add(stock.reserve(item.quantity(), orderId));
                 reserved.add(stock);
                 warehouseId = stock.getWarehouseId();
             }
-            lines.add(new OrderLine(product.getId(), item.variantId(), warehouseId, item.quantity(), product.getPrice(), product.getType()));
+            lines.add(new OrderLine(product.getId(), item.variantId(), warehouseId, item.quantity(), product.getPrice(),
+                    product.getType()));
         }
 
         Order order = new Order(orderId, buyer.getId(), OrderStatus.PENDING_PAYMENT, lines, Instant.now());
+        orders.save(order);
         reserved.forEach(inventory::save);
         movements.forEach(inventory::saveMovement);
         cart.clear();
         carts.save(cart);
-        return orders.save(order);
+        return order;
     }
 }

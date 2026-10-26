@@ -46,7 +46,8 @@ public class ManageCartService implements ManageCartUseCase {
         if (buyer.getCommercialStatus() != BuyerCommercialStatus.ENABLED) {
             throw new BusinessRuleException("El comprador no está habilitado para comprar");
         }
-        Product product = products.findById(command.productId()).orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+        Product product = products.findById(command.productId())
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
         if (product.getStatus() != ProductStatus.PUBLISHED) {
             throw new BusinessRuleException("Solo se pueden agregar productos publicados");
         }
@@ -73,7 +74,8 @@ public class ManageCartService implements ManageCartUseCase {
     }
 
     private Cart loadOrCreate(Buyer buyer) {
-        return carts.findByBuyerId(buyer.getId()).orElseGet(() -> new Cart(UUID.randomUUID().toString(), buyer.getId(), List.of()));
+        return carts.findByBuyerId(buyer.getId())
+                .orElseGet(() -> new Cart(UUID.randomUUID().toString(), buyer.getId(), List.of()));
     }
 
     private Buyer buyerOf(User actor) {
