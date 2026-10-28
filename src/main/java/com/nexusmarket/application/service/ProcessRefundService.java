@@ -36,6 +36,9 @@ public class ProcessRefundService implements ProcessRefundUseCase {
     @Override
     public Refund process(User actor, String returnId) {
         accessPolicy.requireRole(actor, Role.ADMINISTRATOR);
+        if (refunds.findByReturnId(returnId).isPresent() && refunds.findByReturnId(returnId).get().getStatus() == RefundStatus.PROCESSED) {
+            throw new BusinessRuleException("El reembolso ya ha sido ejecutado anteriormente");
+        }
         ReturnRequest returnRequest = returns.findById(returnId).orElseThrow(() -> new ResourceNotFoundException("Devolución no encontrada"));
         if (returnRequest.getStatus() != ReturnStatus.APPROVED) {
             throw new BusinessRuleException("Solo se reembolsa una devolución aprobada");
